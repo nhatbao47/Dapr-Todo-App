@@ -1,7 +1,7 @@
-$grp = "DaprContainerAppDemo"
-$loc = "eastus"
-$environment = "cne-dpr"
-$STORAGE_ACCOUNT = "stdpr2022514432"
+$grp="az204-ws"
+$loc="southeastasia"
+$environment="az204-env"
+$STORAGE_ACCOUNT="az204statestore"
 
 # creating resource group
 az group create --name $grp `
@@ -26,25 +26,25 @@ az containerapp env create --name $environment `
 
 # setting dapr state store
 az containerapp env dapr-component set `
---name $environment --resource-group $grp `
+--name $environment -g $grp `
 --dapr-component-name statestore `
---yaml '.\components\statestore.yml'
+--yaml '/Users/giau/Desktop/Tech/Dapr-Todo-App/components/statestore.yml'
 
 az containerapp env dapr-component list --resource-group $grp --name $environment --output json
 
 # rebuild images
-docker build -t kamalrathnayake/todoappbackend -f 'TodoApp.Backend\Dockerfile' .
-docker push kamalrathnayake/todoappbackend
+docker build --platform linux/amd64 -f TodoApp.Backend/Dockerfile -t rule1/todoapp-backend:latest .
+docker push rule1/todoapp-backend
 
-docker build -t kamalrathnayake/todoappfrontend -f 'TodoApp.Frontend\Dockerfile' .
-docker push kamalrathnayake/todoappfrontend
+docker build --platform linux/amd64 -f TodoApp.Frontend/Dockerfile -t rule1/todoapp-frontend:latest .
+docker push rule1/todoapp-frontend
 
 # creating the backend
 az containerapp create `
   --name todo-back `
   --resource-group $grp `
   --environment $environment `
-  --image kamalrathnayake/todoappbackend:latest `
+  --image rule1/todoapp-backend:latest `
   --target-port 80 `
   --ingress 'internal' `
   --min-replicas 1 `
@@ -59,7 +59,7 @@ az containerapp create `
   --name todo-front `
   --resource-group $grp `
   --environment $environment `
-  --image kamalrathnayake/todoappfrontend:latest `
+  --image rule1/todoapp-frontend:latest `
   --target-port 80 `
   --ingress 'external' `
   --min-replicas 0 `
@@ -69,5 +69,5 @@ az containerapp create `
   --dapr-app-port 80 `
   --dapr-app-id todo-front
 
-
-
+  # delete the resource group
+az group delete --name $grp --yes --no-wait
